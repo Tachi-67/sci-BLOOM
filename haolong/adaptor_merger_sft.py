@@ -1,10 +1,10 @@
-from peft import AutoPeftModelForSequenceClassification
+from peft import AutoPeftModelForCausalLM
 import torch
 from transformers import AutoTokenizer
 
 def merge_and_upload(adaptor_model_id, destination_repo_id, tokenizer = None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    peft_model = AutoPeftModelForSequenceClassification.from_pretrained(adaptor_model_id)
+    peft_model = AutoPeftModelForCausalLM.from_pretrained(adaptor_model_id)
     merged_model = peft_model.merge_and_unload()
     merged_model.to(device)
     print("Model merged")
