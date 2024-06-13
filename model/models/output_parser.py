@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def prep_input(input_sample:dict):
     # Extracting the question and options from the prompt
     # returns the instruction, question_body, and options
-    prompt = input_sample['prompt']
+    prompt = input_sample['question'].replace("\nAnswer:", "")
     question_body = prompt.split('Options:')[0].strip()
     options = prompt.split('Options:')[1].strip()
     instruction = f"""Answer the following question in English:
