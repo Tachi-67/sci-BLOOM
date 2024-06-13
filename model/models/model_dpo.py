@@ -5,6 +5,8 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM
 from models.model_base import PreTrainedModelWrapper
 
+from output_parser import *
+
 class AutoDPOModelForCausalLM(PreTrainedModelWrapper):
     """
     An autoregressive model with support for custom modules in addition to the language model.
@@ -323,9 +325,8 @@ class AutoDPOModelForCausalLM(PreTrainedModelWrapper):
                 A list of dictionaries containing the input mcqa data for the DPO model.
                 The data format is as follows:
                 {
-                    "question": str,
-                    "choices": List[str],
-                    "answer": str,
+                    "question": List[str], each <str> contains the question body and the choices
+                    "answer": List[str], each <str> is a single letter representing the correct answer
                 }
             tokenizer (`PreTrainedTokenizerBase`): The tokenizer used to tokenize the input questions.
         Returns:
@@ -340,38 +341,43 @@ class AutoDPOModelForCausalLM(PreTrainedModelWrapper):
         # ======================================================================
 
         #create a field for the choices that are extracted from the question field 
-        choices = []
-        question_treated = []
-        for question in batch["question"]:
-            #extract the choices from the question field (choices are after \nOptions:)
-            choices.append(question.split("\nOptions:")[1].split("\n")[1:-1])
-            #remove the last element of the choices list
-            if choices:
-                choices[-1].pop()
+        # choices = []
+        # question_treated = []
+        # for question in batch["question"]:
+        #     #extract the choices from the question field (choices are after \nOptions:)
+        #     choices.append(question.split("\nOptions:")[1].split("\n")[1:-1])
+        #     #remove the last element of the choices list
+        #     if choices:
+        #         choices[-1].pop()
 
-            #remove the choices from the question field
-            question_treated.append(question.split("\nOptions:")[0])
+        #     #remove the choices from the question field
+        #     question_treated.append(question.split("\nOptions:")[0])
 
 
-        #add the choices field to the batch
-        batch["choices"] = choices
-        batch["question"] = question_treated
+        # #add the choices field to the batch
+        # batch["choices"] = choices
+        # batch["question"] = question_treated
 
-        tokenizer.pad_token = tokenizer.eos_token
+        # tokenizer.pad_token = tokenizer.eos_token
         
-        for item in range(len(batch["question"])):
-            question = batch["question"][item]
-            choices = batch["choices"][item]
+        # for item in range(len(batch["question"])):
+        #     question = batch["question"][item]
+        #     choices = batch["choices"][item]
 
-            inputs = tokenizer([f"{question} {choice}" for choice in choices], return_tensors="pt", padding=True, truncation=True)
-            with torch.no_grad():
-                outputs = self.pretrained_model(**inputs)
+        #     inputs = tokenizer([f"{question} {choice}" for choice in choices], return_tensors="pt", padding=True, truncation=True)
+        #     with torch.no_grad():
+        #         outputs = self.pretrained_model(**inputs)
             
-            log_probs = F.log_softmax(outputs.logits[:, -1, :], dim=-1)
-            choice_log_probs = log_probs[:, tokenizer.convert_tokens_to_ids(tokenizer.eos_token)].squeeze(-1)
+        #     log_probs = F.log_softmax(outputs.logits[:, -1, :], dim=-1)
+        #     choice_log_probs = log_probs[:, tokenizer.convert_tokens_to_ids(tokenizer.eos_token)].squeeze(-1)
 
-            pred_choice = torch.argmax(choice_log_probs).item()
-            output_answer = choices[pred_choice][0]
+        #     pred_choice = torch.argmax(choice_log_probs).item()
+        #     output_answer = choices[pred_choice][0]
+        #     output_dict["preds"].append(output_answer)
+
+        for item in range(len(batch["question"])):
+            input_sample = {"question": batch["question"][item], "answer": batch["answer"][item]}
+            output_answer = get_mcqa_output(input_sample, self.pretrained_model, tokenizer)
             output_dict["preds"].append(output_answer)
         
         ########################################################################
