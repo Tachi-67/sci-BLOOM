@@ -33,10 +33,10 @@ We provide 2 versions of our fine-tuned models:
 
 We used SFT and DPO (with LoRA) to fine-tune the model. After those, we applied quantization (GPTQ) on the fine-tuned model. For the base model, the SFT-ed model, the DPO-ed model, and the quantized model, we finally apply the MCQ parser to each of them and evaluate these models on labeled MCQs. Below are some facts from our evaluation:
 - LoRA reduced **99.95%** of training parameters.
-- SFT model's accuracy improved **20.6%** in accuracy as compared to the base model.
-- DPO model's accuracy improved **40.2%** in accuracy as compared to the base model.
+- SFT model's accuracy improved **20.6%** as compared to the base model.
+- DPO model's accuracy improved **40.2%** as compared to the base model.
 - Quantization reduced **67.1%** of the model size.
-- Quantized model's accuracy only decreased **2%** in accuracy as compared to the DPO model.
+- Quantized model's accuracy only decreased **2%** as compared to the DPO model.
 
 We conclude that our fine-tuning methods are significantly effective in terms of improving the model's ability to solve STEM questions. Meanwhile, the quantization we implemented largely reduces the model size with a promise of keeping the model's competence.
 
